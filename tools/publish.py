@@ -57,6 +57,21 @@ def encrypt(text, pw):
     return json.dumps({"s": b(salt), "i": b(iv), "n": ITER, "c": b(ct)})
 
 
+def can_open(page_path, pw):
+    """True if pw decrypts the encrypted payload of a published page."""
+    m = re.search(r"const P=(\{.*?\});", open(page_path).read(), flags=re.S)
+    if not m:
+        return False
+    P = json.loads(m.group(1))
+    d = base64.b64decode
+    key = PBKDF2HMAC(algorithm=hashes.SHA256(), length=32, salt=d(P["s"]), iterations=P["n"]).derive(pw.encode())
+    try:
+        AESGCM(key).decrypt(d(P["i"]), d(P["c"]), None)
+        return True
+    except Exception:
+        return False
+
+
 def check_deck(text, name):
     low = text.lower()
     assert low.count('name="robots"') >= 1 and "noindex" in low, f"{name}: robots noindex meta missing"
@@ -220,6 +235,12 @@ def cmd_space(a):
     docs = cfg["documents"]
     for slug in srcs:
         assert any(doc["slug"] == slug for doc in docs), f"{slug} is not listed in {a.config}"
+    # The whole space shares one password: check it against a page that is already published.
+    for existing in [os.path.join(base, "index.html")] + [os.path.join(base, d["slug"], "index.html") for d in docs]:
+        if os.path.exists(existing):
+            assert can_open(existing, pw), (f"This password does not open {os.path.relpath(existing, ROOT)}. "
+                                            "Use the client's existing password (Pauline has it), never a new one.")
+            break
     for doc in docs:
         out = os.path.join(base, doc["slug"], "index.html")
         if doc["slug"] in srcs:
