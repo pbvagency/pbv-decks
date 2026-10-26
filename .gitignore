@@ -1,0 +1,5 @@
+pw.txt
+*.pw
+*.password
+.DS_Store
+__pycache__/
