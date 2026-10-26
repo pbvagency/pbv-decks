@@ -7,7 +7,7 @@ Hosted decks for PBV Agency. Two Netlify projects read from this repository:
 | `proposals/` | proposals.pbvagency.com | pbv-proposals | Pitches and proposals for prospects: `proposals/<client>/`, e.g. `proposals/kind-patches/` |
 | `clients/` | clients.pbvagency.com | pbv-clients | One private space per client: `clients/<client>/` lists all their documents, each in its own folder, e.g. `clients/les-elfes/q3-2026/` |
 
-Client spaces today: `les-elfes`, `me-and-all-hotels`. Les Jardins de Chivrageon will be `j-d-c`.
+Client spaces today: `les-elfes`, `me-and-all-hotels`, `j-d-c` (in French: set `"lang": "fr"` in the space config).
 
 ## How a page is protected
 

@@ -78,7 +78,7 @@ def check_deck(text, name):
 
 
 GATE = """<!DOCTYPE html>
-<html lang="en">
+<html lang="__L_LANG__">
 <head>
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta charset="UTF-8">
@@ -116,11 +116,11 @@ button:disabled{opacity:.6;cursor:wait;}
   <h1>__H1__</h1>
   <p>__INTRO__</p>
   <form id="f" autocomplete="off">
-    <input id="pw" type="password" placeholder="Password" aria-label="Password" autofocus required>
+    <input id="pw" type="password" placeholder="__L_PW__" aria-label="__L_PW__" autofocus required>
     <button id="go" type="submit">__BUTTON__</button>
     <div id="err" role="alert"></div>
   </form>
-  <div class="foot">PBV Agency &middot; pbvagency.com</div>
+  <div class="foot"><a href="https://pbvagency.com" style="color:inherit">pbvagency.com</a></div>
 </div>
 <script>
 if(location.protocol==='http:'&&!/^(localhost|127\\.0\\.0\\.1)$/.test(location.hostname)){location.replace('https://'+location.host+location.pathname);}
@@ -139,12 +139,12 @@ document.getElementById('f').addEventListener('submit',async e=>{
   e.preventDefault();
   const btn=document.getElementById('go'),err=document.getElementById('err');
   if(!window.isSecureContext||!(window.crypto&&crypto.subtle)){
-    err.textContent='This page needs a secure connection. Please open it with https:// at the start of the address.';
+    err.textContent='__L_SECURE__';
     return;
   }
-  btn.disabled=true;btn.textContent='Opening...';err.textContent='';
+  btn.disabled=true;btn.textContent='__L_OPENING__';err.textContent='';
   try{await unlock(document.getElementById('pw').value.trim());}
-  catch(x){err.textContent='That password does not match. Please try again.';btn.disabled=false;btn.textContent=LABEL;}
+  catch(x){err.textContent='__L_WRONG__';btn.disabled=false;btn.textContent=LABEL;}
 });
 /* Same tab, same client: the password is only asked once. */
 (function(){let s=null;try{s=sessionStorage.getItem(K);}catch(x){}
@@ -156,8 +156,33 @@ document.getElementById('f').addEventListener('submit',async e=>{
 """
 
 
-def gate(payload, title, eyebrow, h1, intro, button, key):
-    out = GATE
+TEXT = {
+    "en": {"LANG": "en", "PW": "Password", "OPENING": "Opening...", "WRONG": "That password does not match. Please try again.",
+           "SECURE": "This page needs a secure connection. Please open it with https:// at the start of the address.",
+           "DOCS_H1": "Your <em>documents</em>", "NEW": "New", "TITLE_DOCS": "Your documents", "OPEN": "Open",
+           "OPEN_DOC": "Open the review",
+           "DOC_INTRO": "This document is confidential. Please enter the password shared with you by PBV Agency.",
+           "SPACE_INTRO": "Your private space with PBV Agency. Please enter the password shared with you by PBV Agency.",
+           "NOTE": "This page and every document on it are confidential and only open with your password. Questions about any of them:"},
+    "fr": {"LANG": "fr", "PW": "Mot de passe", "OPENING": "Ouverture...", "WRONG": "Ce mot de passe ne correspond pas. Merci de r\u00e9essayer.",
+           "SECURE": "Cette page demande une connexion s\u00e9curis\u00e9e. Merci de l\\'ouvrir avec https:// au d\u00e9but de l\\'adresse.",
+           "DOCS_H1": "Vos <em>documents</em>", "NEW": "Nouveau", "TITLE_DOCS": "Vos documents", "OPEN": "Ouvrir",
+           "OPEN_DOC": "Ouvrir le document",
+           "DOC_INTRO": "Ce document est confidentiel. Merci d\u2019entrer le mot de passe transmis par PBV Agency.",
+           "SPACE_INTRO": "Votre espace priv\u00e9 avec PBV Agency. Merci d\u2019entrer le mot de passe transmis par PBV Agency.",
+           "NOTE": "Cette page et chaque document sont confidentiels et ne s\u2019ouvrent qu\u2019avec votre mot de passe. Une question sur l\u2019un d\u2019eux:"},
+}
+
+
+def localize(template, lang):
+    t = TEXT[lang]
+    for k, v in t.items():
+        template = template.replace(f"__L_{k}__", v)
+    return template
+
+
+def gate(payload, title, eyebrow, h1, intro, button, key, lang="en"):
+    out = localize(GATE, lang)
     for k, v in {"__TITLE__": H.escape(title), "__FAV__": FAV, "__LOGO__": LOGO, "__EYEBROW__": eyebrow,
                  "__H1__": h1, "__INTRO__": intro, "__BUTTON__": button, "__KEY__": key}.items():
         out = out.replace(k, v)
@@ -173,7 +198,7 @@ def write(path, text):
 
 
 SPACE_PAGE = """<!DOCTYPE html>
-<html lang="en">
+<html lang="__L_LANG__">
 <head>
 <meta name="robots" content="noindex, nofollow, noarchive">
 <meta charset="UTF-8">
@@ -211,13 +236,13 @@ li:nth-child(3n+2) .bar{background:var(--violet);} li:nth-child(3n+3) .bar{backg
 <div class="wrap">
   <img class="logo" src="__LOGO__" alt="PBV Agency">
   <div class="eyebrow">__EYEBROW__</div>
-  <h1>Your <em>documents</em></h1>
+  <h1>__L_DOCS_H1__</h1>
   <p class="intro">__INTRO__</p>
   <ul>
 __ITEMS__
   </ul>
-  <p class="note">This page and every document on it are confidential and only open with your password. Questions about any of them: <a href="mailto:pauline@pbvagency.com">pauline@pbvagency.com</a></p>
-  <div class="foot">PBV Agency &middot; <a href="https://pbvagency.com" style="color:inherit">pbvagency.com</a></div>
+  <p class="note">__L_NOTE__ <a href="mailto:pauline@pbvagency.com">pauline@pbvagency.com</a></p>
+  <div class="foot"><a href="https://pbvagency.com" style="color:inherit">pbvagency.com</a></div>
 </div>
 </body>
 </html>
@@ -233,6 +258,8 @@ def cmd_space(a):
     base = os.path.join(ROOT, "clients", space)
     key = "pbv_" + space
     docs = cfg["documents"]
+    lang = cfg.get("lang", "en")
+    T = TEXT[lang]
     for slug in srcs:
         assert any(doc["slug"] == slug for doc in docs), f"{slug} is not listed in {a.config}"
     # The whole space shares one password: check it against a page that is already published.
@@ -247,23 +274,22 @@ def cmd_space(a):
             text = open(srcs[doc["slug"]], encoding="utf-8").read()
             check_deck(text, doc["slug"])
             page = gate(encrypt(text, pw), f'{cfg["client"]} | {doc["title"]} | PBV Agency', f'{cfg["client"]} x PBV Agency',
-                        doc["gate_h1"], "This document is confidential. Please enter the password shared with you by PBV Agency.",
-                        doc.get("button", "Open the review"), key)
+                        doc["gate_h1"], T["DOC_INTRO"], doc.get("button", T["OPEN_DOC"]), key, lang)
             write(out, page)
         else:
             assert os.path.exists(out), f"{doc['slug']}: no encrypted copy yet, pass --src {doc['slug']}=FILE"
     items = []
     for i, doc in enumerate(docs):
-        new = '<span class="new">New</span>' if i == 0 and len(docs) > 1 else ""
+        new = f'<span class="new">{T["NEW"]}</span>' if i == 0 and len(docs) > 1 else ""
         items.append(f'    <li><a class="doc" href="{doc["slug"]}/"><span class="bar"></span><span><div class="t">{doc["title"]}{new}</div>'
                      f'<div class="m">{doc["meta"]}</div></span><span class="go">&rarr;</span></a></li>')
-    page = SPACE_PAGE
-    for k, v in {"__TITLE__": H.escape(f'{cfg["client"]} | Your documents | PBV Agency'), "__FAV__": FAV, "__LOGO__": LOGO,
+    page = localize(SPACE_PAGE, lang)
+    for k, v in {"__TITLE__": H.escape(f'{cfg["client"]} | {T["TITLE_DOCS"]} | PBV Agency'), "__FAV__": FAV, "__LOGO__": LOGO,
                  "__EYEBROW__": f'{cfg["client"]} x PBV Agency', "__INTRO__": cfg["intro"], "__ITEMS__": "\n".join(items)}.items():
         page = page.replace(k, v)
     write(os.path.join(base, "index.html"),
-          gate(encrypt(page, pw), f'{cfg["client"]} | PBV Agency', f'{cfg["client"]} x PBV Agency', "Your <em>documents</em>",
-               "Your private space with PBV Agency. Please enter the password shared with you by PBV Agency.", "Open", key))
+          gate(encrypt(page, pw), f'{cfg["client"]} | PBV Agency', f'{cfg["client"]} x PBV Agency', T["DOCS_H1"],
+               T["SPACE_INTRO"], T["OPEN"], key, lang))
     print(f"\nLink: https://clients.pbvagency.com/{space}/")
 
 

@@ -1,0 +1,9 @@
+{
+  "client": "Les Jardins de Chivrageon",
+  "space": "j-d-c",
+  "lang": "fr",
+  "intro": "Tout ce que je vous ai partagé, au même endroit. Gardez cette page: chaque nouveau bilan y apparaît dès qu’il est prêt.",
+  "documents": [
+    {"slug": "ads-juillet-aout-2026", "title": "Bilan des ads, juillet et août 2026", "gate_h1": "Bilan des <em>ads</em>", "meta": "La Table de Chivrageon &middot; partagé en septembre 2026"}
+  ]
+}
