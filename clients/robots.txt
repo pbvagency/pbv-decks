@@ -1,0 +1,4 @@
+# Crawling is allowed on purpose: Google must be able to read the noindex on every deck.
+# Never use Disallow here, it would keep removed decks in search results.
+User-agent: *
+Allow: /

@@ -1,0 +1,10 @@
+# clients.pbvagency.com: one folder per deck, e.g. clients/<deck-name>/index.html
+# No build step: Netlify publishes this folder as it is.
+[build]
+  publish = "."
+
+# Decks must never appear in Google, whatever the file itself says.
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex, nofollow, noarchive"
