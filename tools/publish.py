@@ -100,7 +100,14 @@ h1{font-family:Georgia,"Times New Roman",serif;font-weight:400;font-size:38px;li
 h1 em{color:var(--violet);}
 p{font-size:13.5px;font-weight:300;line-height:1.7;color:#666;margin-top:14px;}
 form{margin-top:28px;display:flex;flex-direction:column;gap:10px;}
-input{padding:13px 14px;border:1px solid var(--grey2);border-radius:10px;font-size:15px;background:white;outline:none;}
+input{width:100%;padding:13px 76px 13px 14px;border:1px solid var(--grey2);border-radius:10px;font-size:15px;background:white;outline:none;}
+.pwrap{position:relative;}
+.pwrap .eye{position:absolute;top:50%;right:6px;transform:translateY(-50%);display:flex;align-items:center;gap:5px;padding:7px 9px;border-radius:7px;background:transparent;color:#666;font-size:12px;font-weight:600;}
+.pwrap .eye:hover{background:#F4F3F0;color:var(--black);}
+.pwrap .eye svg{width:17px;height:17px;}
+.pwrap .eye .off{display:none;}
+.pwrap .eye[aria-pressed="true"] .on{display:none;}
+.pwrap .eye[aria-pressed="true"] .off{display:block;}
 input:focus{border-color:var(--black);}
 button{padding:13px 14px;border:none;border-radius:10px;background:var(--black);color:var(--white);font-size:14px;font-weight:600;cursor:pointer;}
 button:disabled{opacity:.6;cursor:wait;}
@@ -116,7 +123,8 @@ button:disabled{opacity:.6;cursor:wait;}
   <h1>__H1__</h1>
   <p>__INTRO__</p>
   <form id="f" autocomplete="off">
-    <input id="pw" type="password" placeholder="__L_PW__" aria-label="__L_PW__" autofocus required>
+    <div class="pwrap"><input id="pw" type="password" placeholder="__L_PW__" aria-label="__L_PW__" autofocus required>
+    <button type="button" class="eye" id="eye" aria-pressed="false" aria-label="__L_SHOW__" title="__L_SHOW__"><svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l18 18"/><path d="M10.6 5.1A10.9 10.9 0 0 1 12 5c6.5 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.2M6.6 6.6C3.9 8.3 2 12 2 12s3.5 7 10 7c1.8 0 3.4-.5 4.8-1.3"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></svg><span id="eyeTxt">__L_SHOW__</span></button></div>
     <button id="go" type="submit">__BUTTON__</button>
     <div id="err" role="alert"></div>
   </form>
@@ -135,6 +143,9 @@ async function unlock(pw){
   const html=new TextDecoder().decode(buf);
   document.open();document.write(html);document.close();
 }
+(function(){const b=document.getElementById('eye'),i=document.getElementById('pw'),t=document.getElementById('eyeTxt');
+  b.addEventListener('click',()=>{const show=i.type==='password';i.type=show?'text':'password';b.setAttribute('aria-pressed',show);
+    const l=show?'__L_HIDE__':'__L_SHOW__';t.textContent=l;b.setAttribute('aria-label',l);b.title=l;i.focus();});})();
 document.getElementById('f').addEventListener('submit',async e=>{
   e.preventDefault();
   const btn=document.getElementById('go'),err=document.getElementById('err');
@@ -157,14 +168,14 @@ document.getElementById('f').addEventListener('submit',async e=>{
 
 
 TEXT = {
-    "en": {"LANG": "en", "PW": "Password", "OPENING": "Opening...", "WRONG": "That password does not match. Please try again.",
+    "en": {"LANG": "en", "PW": "Password", "SHOW": "Show", "HIDE": "Hide", "OPENING": "Opening...", "WRONG": "That password does not match. Please try again.",
            "SECURE": "This page needs a secure connection. Please open it with https:// at the start of the address.",
            "DOCS_H1": "Your <em>documents</em>", "NEW": "New", "TITLE_DOCS": "Your documents", "OPEN": "Open",
            "OPEN_DOC": "Open the review",
            "DOC_INTRO": "This document is confidential. Please enter the password shared with you by PBV Agency.",
            "SPACE_INTRO": "Your private space with PBV Agency. Please enter the password shared with you by PBV Agency.",
            "NOTE": "This page and every document on it are confidential and only open with your password. Questions about any of them:"},
-    "fr": {"LANG": "fr", "PW": "Mot de passe", "OPENING": "Ouverture...", "WRONG": "Ce mot de passe ne correspond pas. Merci de r\u00e9essayer.",
+    "fr": {"LANG": "fr", "PW": "Mot de passe", "SHOW": "Afficher", "HIDE": "Masquer", "OPENING": "Ouverture...", "WRONG": "Ce mot de passe ne correspond pas. Merci de r\u00e9essayer.",
            "SECURE": "Cette page demande une connexion s\u00e9curis\u00e9e. Merci de l\\'ouvrir avec https:// au d\u00e9but de l\\'adresse.",
            "DOCS_H1": "Vos <em>documents</em>", "NEW": "Nouveau", "TITLE_DOCS": "Vos documents", "OPEN": "Ouvrir",
            "OPEN_DOC": "Ouvrir le document",
