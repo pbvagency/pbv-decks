@@ -310,9 +310,17 @@ def cmd_proposal(a):
     text = open(a.src, encoding="utf-8").read()
     check_deck(text, a.slug)
     assert "edit-overlay" not in text, "strip the edit panel before publishing a proposal"
-    who = f"{a.contact} and the {a.client} team" if a.contact else f"the {a.client} team"
-    page = gate(encrypt(text, pw), f"PBV Agency x {a.client}", a.eyebrow, f"{H.escape(a.client)} <em>x</em> PBV Agency",
-                f"This page is for {H.escape(who)}. Please enter the password from Pauline's email.", a.button, "pbv_" + a.slug)
+    if a.lang == "fr":
+        who = f"{a.contact} et l\u2019\u00e9quipe {a.client}" if a.contact else f"l\u2019\u00e9quipe {a.client}"
+        intro = f"Cette page est r\u00e9serv\u00e9e \u00e0 {H.escape(who)}. Merci d\u2019entrer le mot de passe re\u00e7u dans l\u2019e-mail de Pauline."
+        eyebrow = "Proposition priv\u00e9e" if a.eyebrow == "Private proposal" else a.eyebrow
+        button = "Ouvrir la proposition" if a.button == "Open the proposal" else a.button
+    else:
+        who = f"{a.contact} and the {a.client} team" if a.contact else f"the {a.client} team"
+        intro = f"This page is for {H.escape(who)}. Please enter the password from Pauline's email."
+        eyebrow, button = a.eyebrow, a.button
+    page = gate(encrypt(text, pw), f"PBV Agency x {a.client}", eyebrow, f"{H.escape(a.client)} <em>x</em> PBV Agency",
+                intro, button, "pbv_" + a.slug, a.lang)
     write(os.path.join(ROOT, "proposals", a.slug, "index.html"), page)
     print(f"\nLink: https://proposals.pbvagency.com/{a.slug}/")
 
@@ -324,6 +332,7 @@ s.set_defaults(f=cmd_space)
 s = sub.add_parser("proposal"); s.add_argument("src"); s.add_argument("slug"); s.add_argument("--client", required=True)
 s.add_argument("--contact"); s.add_argument("--password-file", required=True)
 s.add_argument("--eyebrow", default="Private proposal"); s.add_argument("--button", default="Open the proposal")
+s.add_argument("--lang", default="en", choices=["en", "fr"])
 s.set_defaults(f=cmd_proposal)
 s = sub.add_parser("newpassword"); s.set_defaults(f=lambda a: print(new_password()))
 a = p.parse_args(); a.f(a)
