@@ -816,3 +816,6 @@ table.data tr.row:hover td{background:rgba(0,0,0,.03)}
 [hidden]{display:none!important}
 .golive{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;margin-top:10px}
 @media (min-width:1101px){.doors.n2{grid-template-columns:repeat(2,1fr)}}
+/* calendar cards: picture on top, text below at full width so titles do not break */
+.ci{grid-template-columns:1fr;gap:6px}
+.ci .th,.ci.k-story .th{width:100%;aspect-ratio:4/3}
