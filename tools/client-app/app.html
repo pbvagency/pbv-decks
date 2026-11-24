@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="__LANG__">
+<head>
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta charset="utf-8">
+<meta name="referrer" content="no-referrer">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>__TITLE__</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-GV6E47H073"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GV6E47H073');</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+__CSS__
+:root{__COLORS__}
+</style>
+</head>
+<!-- PBV client space app: one template for every client (tools/client-app/app.html). Client details come from tools/spaces/<client>.json. -->
+<body>
+<div id="toast" role="status"></div>
+<div class="app" id="app">
+  <header class="hdr">
+    <a class="hlogo" href="#accueil"><img id="logo" alt=""></a>
+    <nav class="hnav" id="hnav">
+      <a href="#accueil" data-g="accueil" data-t="nav_home"></a>
+      <a href="#dashboard" data-g="dashboard" data-t="nav_dash" id="navDash"></a>
+      <a href="#validation" data-g="validation" data-t="nav_cal"></a>
+      <a href="#documents" data-g="documents" data-t="nav_docs"></a>
+    </nav>
+    <div class="hright">
+      <span class="fake" id="previewTag" hidden data-t="preview"></span>
+      <select class="who-sel" id="who" aria-label="Reviewer"></select>
+      <button class="logout" id="logout" data-t="logout"></button>
+    </div>
+  </header>
+  <main class="main2">
+    <section class="view" id="v-accueil">
+      <div class="ph-label" id="cobrand"></div>
+      <div class="hello" style="margin-top:14px"><span data-t="hello"></span> <b id="helloName" style="font-weight:inherit"></b></div>
+      <div class="doors" id="doors"></div>
+    </section>
+
+    <section class="view" id="v-dashboard">
+      <div id="dashHost"></div>
+    </section>
+
+    <section class="view" id="v-documents">
+      <div class="ph-label" data-t="nav_docs"></div>
+      <div class="ph-title" data-t="docs_title"></div>
+      <div class="ph-sub" style="font-size:17px" id="docsIntro"></div>
+      <div class="sec" style="margin-top:34px"><ul class="res" id="docList"></ul></div>
+    </section>
+
+    <section class="view" id="v-validation">
+      <div class="cal-desk" id="calDesk">
+        <div class="ph-label" data-t="nav_cal"></div>
+        <div class="ph-title" id="valTitle"></div>
+        <div class="prevnote" id="prevNote" hidden data-t="preview_note"></div>
+        <div class="vbar">
+          <div class="vbar-l">
+            <div class="mdrop" id="mDrop"><button class="mdrop-btn" id="mDropBtn"><span id="mDropLbl"></span><small id="mDropSt"></small><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4.5l3 3 3-3"/></svg></button><div class="mdrop-menu" id="mDropMenu" hidden></div></div>
+            <div class="seg" id="valView"><button data-v="cal" data-t="v_cal"></button><button data-v="list" data-t="v_list"></button><button data-v="app" data-t="v_app"></button></div>
+          </div>
+          <div class="vbar-r" id="valFilters"><select id="fSt" aria-label="Status"></select><select id="fPl" aria-label="Platform"></select></div>
+        </div>
+        <div class="vsum" id="valSum"></div>
+        <div id="valCalWrap"><div class="cal" id="valCal"></div></div>
+        <div id="valList" hidden></div>
+        <div class="phone-wrap" id="valPhone" hidden>
+          <div class="phone"><div class="phone-notch"></div><div class="phone-screen" id="appHostDesk"></div></div>
+          <div class="phone-side">
+            <div class="cap" data-t="phone_cap"></div>
+            <div class="h3" style="margin-top:8px" data-t="phone_h"></div>
+            <p class="p2" style="margin-top:12px;font-size:15px" data-t="phone_p"></p>
+            <ul class="sec-list" style="margin-top:22px" id="phoneCounts"></ul>
+          </div>
+        </div>
+      </div>
+      <div class="cal-mob" id="appHostMob"></div>
+    </section>
+
+    <div class="foot" style="justify-content:flex-end"><div class="powered"><span>Powered by</span>__PBVLOGO__</div></div>
+  </main>
+</div>
+
+<div class="modal" id="modal" role="dialog" aria-modal="true">
+  <div class="mwrap"><button class="mclose" id="mClose" aria-label="Close">×</button>
+  <div class="mbox rv" id="mBox">
+    <div class="mimg"><div id="mMedia"></div></div>
+    <div class="mbody">
+      <div class="meta" id="mMeta" style="font-size:12px;color:var(--muted);font-weight:600"></div>
+      <div class="h3" id="mTitle" style="margin-top:6px;padding-right:40px"></div>
+      <div class="mcap" id="mCap"></div>
+      <div id="mExtra"></div>
+    </div>
+  </div></div>
+</div>
+
+<script>
+{
+const CFG = __CONFIG__;
+const PREVIEW = __PREVIEW__;   // null online; sample months in a local preview
+const LANG = CFG.lang === 'fr' ? 'fr' : 'en';
+const TXT = {
+ fr:{nav_home:'Accueil',nav_dash:'Dashboard',nav_cal:'Calendrier',nav_docs:'Documents',logout:'Se déconnecter',hello:'Bonjour',preview:'Aperçu',
+   preview_note:'Aperçu avec les vrais contenus du calendrier. Vos choix restent dans cet aperçu.',
+   dash_title:'Les résultats',docs_title:'Rapports et documents',door_dash:'Les résultats',door_cal:'Les contenus à valider',door_docs:'Rapports et documents',
+   open_dash:'Ouvrir le dashboard',open_cal:'Ouvrir le calendrier',open_docs:'Voir les documents',open:'Ouvrir',soon:'À venir',
+   v_cal:'Calendrier',v_list:'Liste',v_app:'Aperçu mobile',all_st:'Tous les statuts',all_pl:'Toutes les plateformes',igf:'Instagram feed',igs:'Instagram stories',
+   prod:'En production',review:'À valider',changes:'À revoir',ok:'Validé',live:'En ligne',okp:'Validés',
+   chg_copy:'Copie à revoir',chg_visual:'Visuel à retravailler',chg_both:'Copie et visuel à revoir',
+   in_review:'En validation',past:'En ligne',upcoming:'À venir',today:'Aujourd’hui',
+   choose:'Copie: choisissez une option',kept:'Copie retenue',option:'Option',need_pick:'Choisissez une copie pour valider.',
+   approve:'Valider',ask:'Demander une modification',cancel:'Annuler',send:'Envoyer',what:'Ce qu’il faut changer',
+   f_copy:'La copie',f_visual:'Le visuel',f_video:'La vidéo',f_both:'Les deux',reopen:'Annuler la validation',
+   live_since:'En ligne depuis le',in_prod:'En production: la copie et le visuel arrivent avec le reste du mois.',approved_at:'Validé. Publication le',at:'à',
+   writing:'Copie en cours de rédaction.',n_opts:'options de copie',to_choose:'à choisir',nothing:'Rien pour le moment.',
+   slides:'Slide par slide',onscreen:'À l’écran',story:'Story',feed:'Feed',reel:'Reel',
+   phone_cap:'Sur téléphone',phone_h:'L’app de validation',phone_p:'Depuis un téléphone, le calendrier devient une app qui montre les contenus comme ils apparaîtront. On choisit la copie, puis on valide ou on demande une modification directement sur chaque contenu.',
+   contents:'Contenus',to_val:'à valider',all_done:'Tout est validé',planned:'Prévu',posts:'publications',stories:'stories',
+   t_ok:'Contenu validé',t_sent:'Demande envoyée à PBV Agency',t_prev:'Aperçu: rien n’est enregistré.',t_moved:'Ce contenu vient d’être modifié. Rechargez la page.',t_err:'Cela n’a pas fonctionné. Vérifiez la connexion et réessayez.',
+   loading:'Chargement du calendrier...',load_err:'Le calendrier ne s’est pas chargé. Rechargez la page dans un instant.',play:'Lire la vidéo',see_live:'Voir sur Instagram',vis_soon:'Visuel à venir',back:'Retour',details:'Détails',see_val:'Voir et valider'},
+ en:{nav_home:'Home',nav_dash:'Dashboard',nav_cal:'Calendar',nav_docs:'Documents',logout:'Log out',hello:'Hello',preview:'Preview',
+   preview_note:'Preview with the real posts from the calendar. Your choices stay in this preview.',
+   dash_title:'Your results',docs_title:'Reports and documents',door_dash:'Your results',door_cal:'Posts to review',door_docs:'Reports and documents',
+   open_dash:'Open the dashboard',open_cal:'Open the calendar',open_docs:'See the documents',open:'Open',soon:'Coming',
+   v_cal:'Calendar',v_list:'List',v_app:'Phone preview',all_st:'All statuses',all_pl:'All platforms',igf:'Instagram feed',igs:'Instagram stories',
+   prod:'In production',review:'To review',changes:'Changes requested',ok:'Approved',live:'Live',okp:'Approved',
+   chg_copy:'Copy to change',chg_visual:'Visual to change',chg_both:'Copy and visual to change',
+   in_review:'In review',past:'Live',upcoming:'Coming',today:'Today',
+   choose:'Caption: choose an option',kept:'Caption',option:'Option',need_pick:'Choose a caption to approve.',
+   approve:'Approve',ask:'Ask for a change',cancel:'Cancel',send:'Send',what:'What should we change?',
+   f_copy:'The copy',f_visual:'The visual',f_video:'The video',f_both:'Both',reopen:'Undo the approval',
+   live_since:'Live since',in_prod:'In production: the copy and the visuals arrive with the rest of the month.',approved_at:'Approved. Goes live on',at:'at',
+   writing:'Copy being written.',n_opts:'caption options',to_choose:'to choose from',nothing:'Nothing for now.',
+   slides:'Slide by slide',onscreen:'On screen',story:'Story',feed:'Feed',reel:'Reel',
+   phone_cap:'On your phone',phone_h:'The review app',phone_p:'On a phone, the calendar becomes an app that shows each post the way it will appear. Choose the caption, then approve or ask for a change, right on the post.',
+   contents:'Posts',to_val:'to review',all_done:'All approved',planned:'Planned',posts:'posts',stories:'stories',
+   t_ok:'Approved, thank you',t_sent:'Sent to PBV Agency',t_prev:'Preview: nothing is saved.',t_moved:'This post was just updated. Reload the page.',t_err:'That did not go through. Check your connection and try again.',
+   loading:'Loading the calendar...',load_err:'The calendar did not load. Reload the page in a moment.',play:'Play the video',see_live:'See it on Instagram',vis_soon:'Visual coming',back:'Back',details:'Details',see_val:'Review'}
+}[LANG];
+const MOIS = LANG === 'fr' ? ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'] : ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DOW = LANG === 'fr' ? ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const PLAT = {ig:'Instagram', fb:'Facebook', li:'LinkedIn', tt:'TikTok'}, PLATS = {ig:'IG', fb:'FB', li:'in', tt:'TT'};
+const $ = s => document.querySelector(s), $$ = s => [...document.querySelectorAll(s)];
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const nl = s => esc(s).replace(/\n/g, '<br>');
+const store = { get(k, d) { try { const v = localStorage.getItem('pbv:' + CFG.client_id + ':' + k); return v == null ? d : v; } catch (e) { return d; } }, set(k, v) { try { localStorage.setItem('pbv:' + CFG.client_id + ':' + k, v); } catch (e) {} } };
+const isMob = () => window.matchMedia('(max-width:760px)').matches;
+const OKSVG = '<svg viewBox="0 0 10 10" fill="none" stroke="#fff" stroke-width="2.2"><path d="M2 5.2l2 2L8 3"/></svg>';
+const PLAYSVG = '<svg width="24" height="24" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg>';
+const ICON = {
+  car: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="7" y="7" width="13" height="13" rx="2"/><path d="M4 16V5a1 1 0 0 1 1-1h11"/></svg>',
+  reel: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><path d="M10 9l5 3-5 3z" fill="currentColor"/></svg>',
+  ig: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.3" cy="6.7" r="1" fill="currentColor"/></svg>',
+  st: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9" stroke-dasharray="3 2.2"/><circle cx="12" cy="12" r="4.5"/></svg>',
+  li: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M4.5 3.5a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM3 9h3v12H3zM9 9h2.9v1.7h.1c.4-.8 1.4-1.9 3.2-1.9 3.3 0 3.8 2.2 3.8 5V21h-3v-6.2c0-1.5 0-3.3-2-3.3s-2.3 1.6-2.3 3.2V21H9z"/></svg>',
+  fb: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M14 8.5V6.8c0-.8.2-1.3 1.4-1.3H17V2.2C16.6 2.1 15.5 2 14.3 2 11.6 2 10 3.6 10 6.5v2H7V12h3v10h4V12h2.8l.4-3.5z"/></svg>',
+  tt: '<svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M16.5 3c.4 2.4 1.9 3.9 4.5 4.1v3.2c-1.6.1-3-.4-4.4-1.3v6.1c0 3.6-2.6 5.9-5.8 5.9A5.6 5.6 0 0 1 5.2 15.4c0-3.6 3-6 6.5-5.5v3.3c-1.6-.4-3.2.6-3.2 2.2 0 1.3 1 2.3 2.4 2.3 1.5 0 2.4-1 2.4-2.6V3z"/></svg>'
+};
+
+/* ---------- state and data ---------- */
+let months = [], items = [], valMonth = '', valView = store.get('view', 'cal'), fSt = '', fPl = '', appTab = 'ig', appSheet = null, appStory = null, current = 'accueil';
+const byId = id => items.find(c => c.id === id);
+const ST = { prod: TXT.prod, review: TXT.review, changes: TXT.changes, ok: TXT.ok, live: TXT.live };
+const STL = { review: TXT.review, changes: TXT.changes, ok: TXT.okp, prod: TXT.prod, live: TXT.live };
+const CHG = { copy: TXT.chg_copy, visual: TXT.chg_visual, both: TXT.chg_both };
+const capOf = c => c.opts ? c.opts[c.pick ?? 0] : (c.cap || '');
+const todo = c => c.st === 'review' || c.st === 'changes';
+const dLabel = iso => { const [y, m, d] = iso.split('-'); return LANG === 'fr' ? `${+d} ${MOIS[+m - 1]} ${y}` : `${+d} ${MOIS[+m - 1]} ${y}`; };
+const shortD = iso => dLabel(iso).replace(/ \d{4}$/, '');
+const tm = t => !t ? '' : LANG === 'fr' ? t.replace(':', 'h') : (() => { let [h, m] = t.split(':').map(Number); const ap = h >= 12 ? 'pm' : 'am'; h = h % 12 || 12; return h + (m ? ':' + String(m).padStart(2, '0') : '') + ' ' + ap; })();
+
+async function api(params) {
+  if (PREVIEW) return params.action === 'months' ? { months: PREVIEW.months } : PREVIEW.data[params.key];
+  const q = new URLSearchParams(Object.assign({ client: CFG.client_id, token: CFG.token }, params));
+  const r = await fetch(CFG.endpoint + '?' + q.toString()); const j = await r.json(); if (j.error) throw new Error(j.error); return j;
+}
+async function decide(c, body) {
+  if (PREVIEW) return { ok: true, preview: true };
+  const r = await fetch(CFG.endpoint, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ client: CFG.client_id, token: CFG.token, tab: c.tab, cols: c.cols, title: c.title, dateLabel: c.dateLabel, who: $('#who').value }, body)) });
+  const j = await r.json(); if (j.error) throw new Error(j.error); return j;
+}
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('on'), 2600); }
+
+/* ---------- media: real photos and videos from the day folders ---------- */
+const vis = c => c.visuals || [];
+const src0 = c => (vis(c)[0] || {}).src || '';
+const img = (src, cls = '') => src ? `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy">` : `<div class="noimg">${TXT.vis_soon}</div>`;
+function videoBox(v, cls = '') { return `<div class="vwrap ${cls}" data-video="${esc(v.embed)}">${img(v.src)}<span class="vbadge">▶ Video</span><button class="vplay" aria-label="${TXT.play}">${PLAYSVG}</button></div>`; }
+function slideHTML(v) { return v.kind === 'video' && v.embed ? videoBox(v) : img(v.src); }
+function reelHTML(c) { const v = vis(c).find(x => x.kind === 'video') || vis(c)[0];
+  return `<div class="reel x-${c.st}" style="position:relative">${v ? slideHTML(v) : img('')}${c.scr && c.scr.length ? `<div class="rtxt">${esc(c.scr[0])}</div>` : ''}</div>`; }
+function storyMediaHTML(c, k = 0) { const fr = c.frames && c.frames.length ? c.frames : [c.t]; const V = vis(c); const v = V[Math.min(k, V.length - 1)];
+  return `<div class="smedia x-${c.st}" data-story-media="${c.id}" data-k="${k}">${v ? slideHTML(v) : img('')}<div class="bars">${fr.map((_, j) => `<i class="${j <= k ? 'cur' : ''}"></i>`).join('')}</div><div class="ov">${c.st === 'prod' ? TXT.prod : esc(fr[k] || '')}</div>${fr.length > 1 ? `<div class="nav2"><button data-sm="-1" aria-label="‹">‹</button><button data-sm="1" aria-label="›">›</button></div>` : ''}</div>`; }
+function carHTML(c, dotsBelow = true) { const S = vis(c).length ? vis(c) : [{ src: '' }];
+  return `<div class="car x-${c.st}" data-car><div class="car-track">${S.map(v => `<div style="flex:0 0 100%;scroll-snap-align:start;position:relative">${slideHTML(v)}</div>`).join('')}</div><span class="car-n">1/${S.length}</span><button class="car-btn pv" data-cv="-1" aria-label="‹" disabled>‹</button><button class="car-btn nx" data-cv="1" aria-label="›" ${S.length < 2 ? 'disabled' : ''}>›</button>${dotsBelow ? `<div class="car-dots">${S.map((_, j) => `<i class="${j ? '' : 'on'}"></i>`).join('')}</div>` : ''}</div>`; }
+function mediaHTML(c) { return c.kind === 'story' ? storyMediaHTML(c) : c.fmt === 'Reel' ? reelHTML(c) : vis(c).length > 1 ? carHTML(c) : `<div class="mfeed x-${c.st}" style="position:relative">${vis(c)[0] ? slideHTML(vis(c)[0]) : img('')}</div>`; }
+const feedMedia = mediaHTML;
+function bindMedia(root) {
+  root.querySelectorAll('[data-video] .vplay').forEach(b => b.onclick = e => { e.stopPropagation(); const w = b.closest('[data-video]');
+    const u = w.dataset.video;
+    w.innerHTML = /\.(mp4|mov|webm)(\?|$)/i.test(u) ? `<video src="${esc(u)}" controls autoplay playsinline style="position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:contain"></video>`
+      : `<iframe src="${esc(u)}" allow="autoplay; fullscreen" allowfullscreen title="Video"></iframe>`; });
+  root.querySelectorAll('[data-car]').forEach(car => { const tr = car.querySelector('.car-track'); const n = tr.children.length;
+    const upd = () => { const i = Math.round(tr.scrollLeft / Math.max(tr.clientWidth, 1)); car.querySelector('.car-n').textContent = `${i + 1}/${n}`; car.querySelectorAll('.car-dots i').forEach((d, j) => d.classList.toggle('on', j === i)); car.querySelector('.pv').disabled = i === 0; car.querySelector('.nx').disabled = i === n - 1; };
+    tr.onscroll = () => { cancelAnimationFrame(tr._r); tr._r = requestAnimationFrame(upd); };
+    car.querySelectorAll('[data-cv]').forEach(b => b.onclick = e => { e.stopPropagation(); tr.scrollBy({ left: +b.dataset.cv * tr.clientWidth, behavior: 'smooth' }); }); });
+  root.querySelectorAll('[data-story-media] [data-sm]').forEach(b => b.onclick = e => { e.stopPropagation(); const box = b.closest('[data-story-media]'); const c = byId(box.dataset.storyMedia); const n = (c.frames && c.frames.length ? c.frames : [c.t]).length; const k = Math.max(0, Math.min(n - 1, +box.dataset.k + +b.dataset.sm));
+    const tmp = document.createElement('div'); tmp.innerHTML = storyMediaHTML(c, k); box.replaceWith(tmp.firstChild); bindMedia(root); });
+}
+
+/* ---------- review block, shared by the desktop sheet and the phone app ---------- */
+const ppills = c => c.plats.map(p => `<span class="pp ${p}" title="${PLAT[p]}">${PLATS[p]}</span>`).join('') + `<span class="pk ${c.kind}">${c.kind === 'story' ? TXT.story : c.fmt === 'Reel' ? TXT.reel : TXT.feed}</span>`;
+const stLabel = c => c.st === 'changes' && c.change ? CHG[c.change] : ST[c.st];
+const chip = c => `<span class="chipst x-${c.st}"><span class="sd x-${c.st}"></span>${stLabel(c)}</span>`;
+function copyBlock(c, ctx) {
+  if (c.kind === 'story' || c.st === 'prod' || !c.opts) return '';
+  if (!todo(c)) return `<div class="copts"><div class="cap2">${TXT.kept}</div><div class="copt on locked"><span></span><span>${nl(capOf(c))}</span></div></div>`;
+  if (c.opts.length === 1) return `<div class="copts"><div class="cap2">${TXT.kept}</div><div class="copt on locked"><span></span><span>${nl(c.opts[0])}</span></div></div>`;
+  return `<div class="copts"><div class="cap2">${TXT.choose}</div>${c.opts.map((o, i) => `<label class="copt ${c.pick === i ? 'on' : ''}"><input type="radio" name="cp-${ctx}-${c.id}" data-cid="${c.id}" data-pick="${i}" ${c.pick === i ? 'checked' : ''}><span><b>${TXT.option} ${'ABCDE'[i]}</b>${nl(o)}</span></label>`).join('')}</div>`;
+}
+function extraBlock(c) {
+  let h = '';
+  if (c.scr && c.scr.length) h += `<div class="extra2"><b>${TXT.onscreen.toUpperCase()}</b>${nl(c.scr.join('\n'))}</div>`;
+  if (c.slides && c.slides.length) h += `<div class="extra2"><b>${TXT.slides.toUpperCase()}</b>${c.slides.map((s, i) => `${i + 1}. ${esc(s)}`).join('<br>')}</div>`;
+  if (c.notes && c.notes.length && c.st !== 'prod') h += `<div class="extra2">${nl(c.notes.join('\n'))}</div>`;
+  if (c.tags && c.st !== 'prod') h += `<div class="extra2 tags">${esc(c.tags)}</div>`;
+  return h;
+}
+function reviewBlock(c, ctx) {
+  let h = `<div class="row2">${ppills(c)}${chip(c)}</div>`;
+  h += `<div class="note2">${dLabel(c.d)}${c.time ? ` ${TXT.at} ${tm(c.time)}` : ''} · ${c.fmt}${c.pil ? ' · ' + esc(c.pil) : ''}</div>`;
+  (c.comments || []).forEach(x => { h += `<div class="cm"><b>${esc(x.who)} · ${esc(x.when)}</b>${esc(x.text || CHG[x.change] || '')}</div>`; });
+  h += copyBlock(c, ctx) + extraBlock(c);
+  const needPick = c.opts && c.opts.length > 1 && c.pick == null;
+  if (c.st === 'live') h += `<div class="note2">${TXT.live_since} ${dLabel(c.d)}.</div>${c.link ? `<a class="abtn ch golive" href="${esc(c.link)}" target="_blank" rel="noopener">${TXT.see_live} ↗</a>` : ''}`;
+  else if (c.st === 'prod') h += `<div class="note2">${TXT.in_prod}</div>`;
+  else if (c.st === 'ok') h += `<div class="note2" style="color:#1F6B42;font-weight:600">${TXT.approved_at} ${dLabel(c.d)}${c.time ? ` ${TXT.at} ${tm(c.time)}` : ''}.</div><button class="abtn ch" data-act="reopen" data-cid="${c.id}">${TXT.reopen}</button>`;
+  else h += `${needPick ? `<div class="hint">${TXT.need_pick}</div>` : ''}<div class="acts"><button class="abtn ok" data-act="approve" data-cid="${c.id}" ${needPick ? 'disabled' : ''}>${TXT.approve}</button><button class="abtn ch" data-act="askchange" data-cid="${c.id}">${TXT.ask}</button></div>
+    <form class="chform" data-cid="${c.id}" hidden><div class="cf-h"><span>${TXT.ask}</span><button type="button" data-act="cfclose">${TXT.cancel}</button></div><div class="opts">${Object.entries({ copy: TXT.f_copy, visual: c.fmt === 'Reel' ? TXT.f_video : TXT.f_visual, both: TXT.f_both }).map(([k, l], i) => `<label><input type="radio" name="chg-${ctx}-${c.id}" value="${k}" ${i === 0 ? 'checked' : ''}>${l}</label>`).join('')}</div><textarea placeholder="${TXT.what}"></textarea><button class="abtn send" type="submit">${TXT.send}</button></form>`;
+  return h;
+}
+async function act(c, body, okMsg, apply, after) {
+  try { const r = await decide(c, body); apply(); after(); toast(r.preview ? TXT.t_prev : okMsg); }
+  catch (e) { toast(e.message === 'moved' || e.message === 'not open for review' ? TXT.t_moved : TXT.t_err); }
+}
+function bindReview(root, after) {
+  root.querySelectorAll('input[data-pick]').forEach(r => r.onchange = () => { const c = byId(r.dataset.cid); c.pick = +r.dataset.pick; after(); });
+  root.querySelectorAll('[data-act="approve"]').forEach(b => b.onclick = e => { e.stopPropagation(); const c = byId(b.dataset.cid); b.disabled = true;
+    act(c, { decision: 'approve', option: c.opts && c.opts.length > 1 ? c.pick + 1 : (c.opts ? 1 : '') }, TXT.t_ok, () => { c.st = 'ok'; c.change = null; c.cap = capOf(c); }, after); });
+  root.querySelectorAll('[data-act="reopen"]').forEach(b => b.onclick = e => { e.stopPropagation(); const c = byId(b.dataset.cid);
+    act(c, { decision: 'reopen' }, TXT.review, () => { c.st = 'review'; }, after); });
+  root.querySelectorAll('[data-act="askchange"]').forEach(b => b.onclick = e => { e.stopPropagation(); const f = root.querySelector(`form.chform[data-cid="${b.dataset.cid}"]`); f.hidden = !f.hidden; const sh = f.closest('.sheet'); if (sh) sh.classList.toggle('cf-open', !f.hidden); if (!f.hidden) f.querySelector('textarea').focus(); });
+  root.querySelectorAll('[data-act="cfclose"]').forEach(b => b.onclick = e => { e.stopPropagation(); const f = b.closest('form'); f.hidden = true; const sh = f.closest('.sheet'); if (sh) sh.classList.remove('cf-open'); });
+  root.querySelectorAll('form.chform').forEach(f => f.onsubmit = e => { e.preventDefault(); const c = byId(f.dataset.cid); const kind = f.querySelector('input:checked').value; const txt = f.querySelector('textarea').value.trim();
+    act(c, { decision: 'changes', change: kind, comment: txt, option: c.opts && c.opts.length > 1 && c.pick != null ? c.pick + 1 : '' }, TXT.t_sent,
+      () => { c.st = 'changes'; c.change = kind; c.comments = [...(c.comments || []), { who: $('#who').value, when: TXT.today.toLowerCase(), text: txt || CHG[kind] }]; }, after); });
+  bindMedia(root);
+}
+
+/* ---------- desktop calendar: month grid and list ---------- */
+const plOk = c => !fPl || (fPl === 'igf' ? c.plats.includes('ig') && c.kind === 'feed' : fPl === 'igs' ? c.kind === 'story' : c.plats.includes(fPl));
+const todayISO = () => { const n = new Date(); return `${n.getFullYear()}-${String(n.getMonth() + 1).padStart(2, '0')}-${String(n.getDate()).padStart(2, '0')}`; };
+const curKey = () => todayISO().slice(0, 7);
+const monthState = k => k < curKey() ? TXT.past : k === curKey() || items.some(c => todo(c)) && k === valMonth ? TXT.in_review : TXT.upcoming;
+function thumb(c) { return `<span class="th">${src0(c) ? `<img src="${esc(src0(c))}" alt="" loading="lazy">` : '<span class="noimg"></span>'}${c.st === 'ok' ? `<span class="okb">${OKSVG}</span>` : ''}</span>`; }
+function renderVal() {
+  if (isMob()) { renderApp($('#appHostMob')); return; }
+  const m = months.find(x => x.key === valMonth); if (!m) return;
+  $('#valTitle').textContent = `${TXT.nav_cal}: ${m.label}`;
+  $('#mDropLbl').textContent = m.label; $('#mDropSt').textContent = monthState(valMonth); $('#mDropSt').className = valMonth < curKey() ? 'past' : '';
+  $('#mDropMenu').innerHTML = months.slice().reverse().map(x => `<button data-m="${x.key}" class="${x.key === valMonth ? 'on' : ''}">${esc(x.label)}<span>${x.key < curKey() ? TXT.past : x.key === curKey() ? TXT.in_review : TXT.upcoming}</span></button>`).join('');
+  $$('#valView button').forEach(b => b.classList.toggle('on', b.dataset.v === valView));
+  $('#valCalWrap').hidden = valView !== 'cal'; $('#valList').hidden = valView !== 'list'; $('#valPhone').hidden = valView !== 'app';
+  $('#valFilters').hidden = $('#valSum').hidden = valView === 'app';
+  const visI = items.filter(c => plOk(c) && (!fSt || c.st === fSt));
+  const cnt = {}; items.filter(plOk).forEach(c => cnt[c.st] = (cnt[c.st] || 0) + 1);
+  $('#valSum').innerHTML = ['review', 'changes', 'ok', 'prod', 'live'].filter(k => cnt[k]).map(k => `<span><span class="sd x-${k}"></span><b>${cnt[k]}</b> ${STL[k].toLowerCase()}</span>`).join('');
+  if (valView === 'app') { renderApp($('#appHostDesk')); renderPhoneCounts(); return; }
+  if (valView === 'list') { renderList(visI); return; }
+  const [y, mo] = valMonth.split('-').map(Number), first = (new Date(y, mo - 1, 1).getDay() + 6) % 7, days = new Date(y, mo, 0).getDate(), prevDays = new Date(y, mo - 1, 0).getDate();
+  let h = DOW.map(d => `<div class="dow">${d}</div>`).join('');
+  for (let i = first; i > 0; i--) h += `<div class="day out"><div class="dn">${prevDays - i + 1}</div></div>`;
+  for (let d = 1; d <= days; d++) {
+    const iso = `${valMonth}-${String(d).padStart(2, '0')}`, isToday = iso === todayISO();
+    const ps = visI.filter(c => c.d === iso).sort((a, b) => (a.kind === 'story') - (b.kind === 'story') || (a.time || '').localeCompare(b.time || ''));
+    h += `<div class="day ${isToday ? 'today' : ''}"><div class="top"><span class="dn">${d}</span>${isToday ? `<span class="tdy">${TXT.today}</span>` : ''}</div><div class="items">${ps.map(c => `<button class="ci x-${c.st} k-${c.kind}" data-cid="${c.id}">${thumb(c)}<span><span class="t">${esc(c.t)}</span><span class="tg">${ppills(c)}</span><span class="s"><span class="sd x-${c.st}"></span>${stLabel(c)}</span></span></button>`).join('')}</div></div>`;
+  }
+  const total = first + days; for (let i = total; i % 7; i++) h += `<div class="day out"><div class="dn">${i - total + 1}</div></div>`;
+  $('#valCal').innerHTML = h;
+  $$('#valCal .ci').forEach(e => e.onclick = () => openReview(e.dataset.cid));
+}
+function renderList(visI) {
+  const order = ['review', 'changes', 'ok', 'prod', 'live'];
+  const groups = order.map(k => [k, visI.filter(c => c.st === k).sort((a, b) => a.d.localeCompare(b.d) || (a.time || '').localeCompare(b.time || ''))]).filter(([k, L]) => L.length);
+  $('#valList').innerHTML = groups.map(([k, L]) => `<div class="lgrp"><h4><span class="sd x-${k}"></span>${STL[k]} <em>${L.length}</em></h4>${L.map(c => `<button class="lrow x-${c.st} k-${c.kind}" data-cid="${c.id}">${thumb(c)}<span class="ld">${shortD(c.d)}<small>${tm(c.time)}</small></span><span class="lt">${esc(c.t)}<span class="tg">${ppills(c)}</span></span><span class="lc">${c.kind === 'story' ? esc((c.frames || []).join(' · ')) : c.st === 'prod' ? `<i>${TXT.writing}</i>` : c.opts && c.opts.length > 1 && c.pick == null ? `<b>${c.opts.length} ${TXT.n_opts}</b> ${TXT.to_choose}` : esc(capOf(c).split('\n')[0])}</span>${chip(c)}<span>›</span></button>`).join('')}</div>`).join('') || `<div class="lempty">${TXT.nothing}</div>`;
+  $$('#valList .lrow').forEach(e => e.onclick = () => openReview(e.dataset.cid));
+}
+function renderPhoneCounts() { const c2 = {}; items.forEach(c => c2[c.st] = (c2[c.st] || 0) + 1);
+  $('#phoneCounts').innerHTML = ['review', 'changes', 'ok', 'prod'].map(k => `<li><span style="display:flex;align-items:center;gap:8px"><span class="sd x-${k}"></span>${STL[k]}</span><b class="num">${c2[k] || 0}</b></li>`).join(''); }
+
+/* ---------- desktop review sheet ---------- */
+function openReview(id) {
+  const c = byId(id); if (!c) return;
+  $('#mBox').closest('.mwrap').classList.add('wide');
+  $('#mMedia').innerHTML = mediaHTML(c);
+  $('#mMeta').textContent = `${c.plats.map(p => PLAT[p]).join(' + ')} · ${c.kind === 'story' ? TXT.story : c.fmt}`;
+  $('#mTitle').textContent = c.t;
+  $('#mCap').textContent = c.kind === 'story' ? (c.frames || []).map((f, i) => `${TXT.story} ${i + 1}: ${f}`).join('\n') : c.st === 'prod' ? TXT.writing : c.opts && todo(c) ? '' : capOf(c);
+  $('#mCap').style.display = $('#mCap').textContent ? '' : 'none';
+  $('#mExtra').innerHTML = `<div class="rvb" style="padding:16px 0 0">${reviewBlock(c, 'd')}</div>`;
+  bindReview($('#mExtra'), () => { openReview(id); renderVal(); renderHomeCount(); });
+  bindMedia($('#mMedia'));
+  $('#modal').classList.add('open');
+}
+
+/* ---------- phone app (on a phone it is the calendar; on desktop it is the phone preview) ---------- */
+const MINI = `<span class="mini">${esc(CFG.short || CFG.name)}</span>`;
+function renderApp(host) {
+  if (!host) return;
+  const tabs = [['ig', 'Instagram'], ['st', 'Stories']].concat((CFG.platforms || ['ig', 'fb']).filter(p => p !== 'ig').map(p => [p, PLAT[p]]));
+  const nb = k => items.filter(c => c.st === 'review' && (k === 'st' ? c.kind === 'story' : k === 'ig' ? c.kind === 'feed' && c.plats.includes('ig') : c.kind === 'feed' && c.plats.includes(k))).length;
+  const n = items.filter(c => c.st === 'review').length, m = months.find(x => x.key === valMonth);
+  const keep = host.querySelector('.ma-body')?.scrollTop || 0, sameTab = host.dataset.tab === appTab; host.dataset.tab = appTab;
+  host.innerHTML = `<div class="mapp">
+    <div class="ma-top"><b>${TXT.contents} · ${esc(m ? m.label : '')}</b><span class="ma-cnt ${n ? '' : 'done'}">${n ? n + ' ' + TXT.to_val : TXT.all_done}</span></div>
+    ${isMob() && months.length > 1 ? `<div style="padding:8px 12px;border-bottom:1px solid #eee"><select id="mobMonth" class="who-sel" style="width:100%">${months.slice().reverse().map(x => `<option value="${x.key}" ${x.key === valMonth ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></div>` : ''}
+    <div class="ma-body">${appTab === 'ig' ? appIG() : appTab === 'st' ? appStories() : appSocial(appTab)}</div>
+    <nav class="ma-nav">${tabs.map(([k, l]) => `<button data-tab="${k}" class="${appTab === k ? 'on' : ''}"><span class="ico">${ICON[k]}${nb(k) ? `<span class="nb">${nb(k)}</span>` : ''}</span>${l}</button>`).join('')}</nav>
+    ${appSheet ? appSheetHTML(byId(appSheet)) : ''}${appStory ? appStoryHTML() : ''}</div>`;
+  if (sameTab) host.querySelector('.ma-body').scrollTop = keep;
+  const re = () => { const sb = host.querySelector('.sheet .sbody'); const s = sb ? sb.scrollTop : 0; renderApp(host); const nsb = host.querySelector('.sheet .sbody'); if (nsb) nsb.scrollTop = s; if (!isMob() && valView === 'app') renderPhoneCounts(); renderHomeCount(); };
+  const mm = host.querySelector('#mobMonth'); if (mm) mm.onchange = () => loadMonth(mm.value);
+  host.querySelectorAll('[data-tab]').forEach(b => b.onclick = () => { appTab = b.dataset.tab; appSheet = null; appStory = null; renderApp(host); });
+  host.querySelectorAll('[data-open]').forEach(b => b.onclick = () => { appSheet = b.dataset.open; renderApp(host); });
+  host.querySelectorAll('[data-story]').forEach(b => b.onclick = () => { appStory = { id: b.dataset.story, k: 0 }; renderApp(host); });
+  host.querySelectorAll('[data-act="close"]').forEach(b => b.onclick = () => { appSheet = null; appStory = null; renderApp(host); });
+  host.querySelectorAll('[data-act="snext"]').forEach(b => b.onclick = () => { const s = byId(appStory.id); if (appStory.k < (s.frames && s.frames.length ? s.frames.length : 1) - 1) appStory.k++; else appStory = null; renderApp(host); });
+  host.querySelectorAll('[data-act="sprev"]').forEach(b => b.onclick = () => { if (appStory.k > 0) { appStory.k--; renderApp(host); } });
+  host.querySelectorAll('[data-act="sreview"]').forEach(b => b.onclick = () => { appSheet = appStory.id; appStory = null; renderApp(host); });
+  bindReview(host, re);
+}
+function gtile(c) { const badge = c.st === 'ok' ? `<span class="gok">${OKSVG}</span>` : todo(c) ? `<span class="gbadge x-${c.st}">${ST[c.st]}</span>` : '';
+  return `<button class="gt x-${c.st}" data-open="${c.id}">${img(src0(c))}<span class="gf">${c.fmt === 'Carousel' ? ICON.car : c.fmt === 'Reel' ? ICON.reel : ''}</span>${badge}<span class="gl">${c.st === 'prod' ? TXT.prod : shortD(c.d)}</span></button>`; }
+function appIG() {
+  const feed = items.filter(c => c.kind === 'feed' && c.plats.includes('ig')).sort((a, b) => b.d.localeCompare(a.d));
+  const hl = (CFG.highlights || []).map(h => `<div><i><span></span></i>${esc(h)}</div>`).join('');
+  return `<div class="ig-prof"><div class="ig-av"><span><img src="${CFG.assets.logo}" alt="" style="width:86%"></span></div><div class="ig-stats"><div><b>${feed.length}</b><span>${TXT.posts}</span></div><div><b>${items.filter(c => c.kind === 'story').length}</b><span>${TXT.stories}</span></div><div><b>${items.filter(c => c.st === 'review').length}</b><span>${TXT.to_val}</span></div></div></div>
+    <div class="ig-bio"><b>${esc(CFG.name)}</b><br>${nl(CFG.bio || '')}${CFG.site ? `<br><a>${esc(CFG.site)}</a>` : ''}</div>
+    ${hl ? `<div class="ig-hl">${hl}</div>` : ''}
+    <div class="ig-tabs"><span class="on">${ICON.car.replace('width="16" height="16"', 'width="20" height="20"')}</span><span>${ICON.reel}</span><span>@</span></div>
+    <div class="ig-grid"><div class="gsep">${TXT.planned} · ${esc((months.find(x => x.key === valMonth) || {}).label || '')}</div>${feed.map(gtile).join('')}</div>`;
+}
+function stc(c) { return `<button class="stc x-${c.st}" data-story="${c.id}"><span class="sth">${img(src0(c))}<span class="sbars">${(c.frames && c.frames.length ? c.frames : ['']).map(() => '<i></i>').join('')}</span><span class="stt">${c.st === 'prod' ? TXT.prod : esc((c.frames || [c.t])[0] || c.t)}</span></span><span class="stm"><b style="color:#111">${shortD(c.d)}</b>${c.st === 'live' ? '' : chip(c)}</span></button>`; }
+function appStories() { const L = items.filter(c => c.kind === 'story').sort((a, b) => a.d.localeCompare(b.d)); return `<div class="st-grid">${L.map(stc).join('') || `<div class="lempty">${TXT.nothing}</div>`}</div>`; }
+function scard(c, net, withFoot) {
+  const media = c.fmt === 'Reel' ? reelHTML(c) : vis(c).length > 1 && net === 'fb' ? carHTML(c) : `<div class="sim-w" style="position:relative">${vis(c)[0] ? slideHTML(vis(c)[0]) : img('')}</div>`;
+  return `<div class="scard ${net} x-${c.st}"><div class="sh2"><span class="lgo"><img src="${CFG.assets.logo}" alt="" style="width:90%"></span><div><b>${esc(CFG.name)}</b><small>${shortD(c.d)} · ${tm(c.time)}</small></div></div>
+    <div class="stx">${c.st === 'prod' ? `<i style="color:#888">${TXT.writing}</i>` : c.opts && c.opts.length > 1 && c.pick == null && todo(c) ? `<i style="color:#666">${c.opts.length} ${TXT.n_opts} ${TXT.to_choose}</i>` : nl(capOf(c))}</div>${media}
+    ${withFoot ? `<div class="sfo">${chip(c)}${todo(c) ? `<button class="go" data-open="${c.id}">${TXT.see_val}</button>` : c.st === 'ok' ? `<button class="go" data-open="${c.id}" style="border-color:#ddd">${TXT.details}</button>` : ''}</div>` : ''}</div>`;
+}
+function appSocial(net) { const L = items.filter(c => c.plats.includes(net) && c.kind === 'feed').sort((a, b) => a.d.localeCompare(b.d)); return `<div class="feedbg ${net}">${L.map(c => scard(c, net, true)).join('') || `<div class="lempty">${TXT.nothing}</div>`}</div>`; }
+function appSheetHTML(c) {
+  if (!c) return '';
+  const net = appTab === 'li' || appTab === 'fb' || appTab === 'tt' ? appTab : null; let body;
+  if (c.kind === 'story') body = `<div style="width:70%;margin:14px auto;border-radius:12px;overflow:hidden">${storyMediaHTML(c)}</div>`;
+  else if (net) body = scard(c, net, false);
+  else body = `<div class="iph">${MINI}<b>${esc(CFG.handle || '')}</b></div>${feedMedia(c)}<div class="pcap"><b>${esc(CFG.handle || '')}</b> ${c.st === 'prod' ? `<i style="color:#888">${TXT.writing}</i>` : c.opts && c.opts.length > 1 && c.pick == null && todo(c) ? `<i style="color:#666">${TXT.choose}</i>` : nl(capOf(c))}</div><div class="pdate">${dLabel(c.d)}</div>`;
+  return `<div class="sheet"><div class="shd"><button data-act="close" aria-label="${TXT.back}">‹</button><b>${esc(c.t)}</b></div><div class="sbody">${body}<div class="rvb">${reviewBlock(c, 's')}</div></div></div>`;
+}
+function appStoryHTML() {
+  const c = byId(appStory.id); const fr = c.frames && c.frames.length ? c.frames : [c.t]; const k = appStory.k; const V = vis(c); const v = V[Math.min(k, V.length - 1)];
+  return `<div class="story-v x-${c.st}"><div class="stage">${v ? slideHTML(v) : img('')}
+      <div class="sb">${fr.map((_, j) => `<i class="${j < k ? 'done' : j === k ? 'cur' : ''}"></i>`).join('')}</div>
+      <div class="shh">${MINI}<b>${esc(CFG.handle || '')}</b><span style="opacity:.8">${shortD(c.d)}</span><button class="sx" data-act="close" aria-label="×">×</button></div>
+      <div class="ov">${c.st === 'prod' ? TXT.prod : esc(fr[k] || '')}</div>
+      <button class="tap l" data-act="sprev" aria-label="‹"></button><button class="tap r" data-act="snext" aria-label="›"></button></div>
+    <div class="sfoot"><button class="sback" data-act="close">‹ ${TXT.back}</button>${chip(c)}${c.st === 'live' ? '' : `<button class="abtn ch" data-act="sreview">${todo(c) ? TXT.approve : TXT.details}</button>`}</div></div>`;
+}
+
+/* ---------- home, dashboard, documents ---------- */
+function renderStatic() {
+  document.title = `${CFG.name} | PBV Agency`;
+  $$('[data-t]').forEach(e => e.textContent = TXT[e.dataset.t] || '');
+  $('#logo').src = CFG.assets.logo; $('#logo').alt = CFG.name;
+  $('#cobrand').textContent = CFG.cobrand || `${CFG.name} × PBV Agency`;
+  $('#helloName').textContent = CFG.hello || CFG.name;
+  $('#previewTag').hidden = !PREVIEW; $('#prevNote').hidden = !PREVIEW;
+  $('#who').innerHTML = (CFG.reviewers || [CFG.short || CFG.name]).map(n => `<option>${esc(n)}</option>`).join(''); { const w = store.get('who', ''); if ((CFG.reviewers || []).includes(w)) $('#who').value = w; }
+  $('#who').hidden = (CFG.reviewers || []).length < 2; $('#who').onchange = e => store.set('who', e.target.value);
+  const doors = [];
+  if (CFG.dashboard) doors.push(['dashboard', TXT.nav_dash, TXT.door_dash, TXT.open_dash, CFG.assets.doors[0], 'var(--o1)']);
+  if (CFG.calendar) doors.push(['validation', TXT.nav_cal, TXT.door_cal + ' <span class="count" id="homeCount" hidden></span>', TXT.open_cal, CFG.assets.doors[1], 'var(--navy)']);
+  doors.push(['documents', TXT.nav_docs, TXT.door_docs, TXT.open_docs, CFG.assets.doors[2], 'var(--o2)']);
+  $('#doors').innerHTML = doors.map(([h, cap, dh, go, im, col]) => `<a class="door" href="#${h}"><div class="filet" style="background:${col}"></div><div class="dimg" style="background-image:url(${im})"></div><div class="cap">${cap}</div><div class="dh">${dh}</div><span class="dgo">${go} <i>→</i></span></a>`).join('');
+  $('#navDash').hidden = !CFG.dashboard;
+  $('#hnav a[data-g="validation"]').hidden = !CFG.calendar;
+  $('#doors').classList.toggle('n2', doors.length === 2);
+  $('#docsIntro').textContent = CFG.documents_intro || '';
+  $('#docList').innerHTML = (CFG.docs || []).map(d => `<li><span class="ico">${d.kind || 'DOC'}</span><div><div class="h4">${esc(d.title)}</div><div class="note">${esc(d.meta || '')}</div></div>${d.url ? `<a class="btn ghost" href="${esc(d.url)}" ${/^https?:/.test(d.url) ? 'target="_blank" rel="noopener"' : ''}>${TXT.open} →</a>` : `<span class="btn" aria-disabled="true">${TXT.soon}</span>`}</li>`).join('');
+  $('#fSt').innerHTML = `<option value="">${TXT.all_st}</option>` + ['review', 'changes', 'ok', 'prod', 'live'].map(k => `<option value="${k}">${STL[k]}</option>`).join('');
+  $('#fPl').innerHTML = `<option value="">${TXT.all_pl}</option><option value="igf">${TXT.igf}</option><option value="igs">${TXT.igs}</option>` + (CFG.platforms || []).filter(p => p !== 'ig').map(p => `<option value="${p}">${PLAT[p]}</option>`).join('');
+  $('#fSt').onchange = e => { fSt = e.target.value; renderVal(); }; $('#fPl').onchange = e => { fPl = e.target.value; renderVal(); };
+  $$('#valView button').forEach(b => b.onclick = () => { valView = b.dataset.v; store.set('view', valView); renderVal(); });
+  $('#mDropBtn').onclick = e => { e.stopPropagation(); $('#mDropMenu').hidden = !$('#mDropMenu').hidden; };
+  $('#mDropMenu').onclick = e => { const b = e.target.closest('button[data-m]'); if (b) { $('#mDropMenu').hidden = true; loadMonth(b.dataset.m); } };
+  document.addEventListener('click', e => { const m = $('#mDropMenu'); if (m && !m.hidden && !e.target.closest('#mDrop')) m.hidden = true; });
+  $('#mClose').onclick = () => $('#modal').classList.remove('open');
+  $('#modal').onclick = e => { if (e.target.id === 'modal') $('#modal').classList.remove('open'); };
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') $('#modal').classList.remove('open'); });
+  $('#logout').onclick = () => { try { sessionStorage.removeItem(CFG.session_key); } catch (x) {} location.reload(); };
+}
+function renderHomeCount() { const n = items.filter(c => c.st === 'review').length, e = $('#homeCount'); if (e) { e.textContent = n; e.hidden = !n; } }
+const VIEWS = ['accueil', 'dashboard', 'documents', 'validation'];
+function route() {
+  $('#modal').classList.remove('open');
+  const v = (location.hash || '#accueil').slice(1); current = VIEWS.includes(v) && (v !== 'dashboard' || CFG.dashboard) && (v !== 'validation' || CFG.calendar) ? v : 'accueil';
+  VIEWS.forEach(x => $('#v-' + x).classList.toggle('on', x === current));
+  $$('#hnav a').forEach(a => a.classList.toggle('on', a.dataset.g === current));
+  if (current === 'dashboard' && !$('#dashHost iframe')) $('#dashHost').innerHTML = `<iframe class="dash-frame" src="${esc(CFG.dashboard)}" title="${TXT.nav_dash}" scrolling="no"></iframe>`;
+  if (current === 'validation') renderVal();
+  window.scrollTo(0, 0);
+}
+async function loadMonth(key) {
+  valMonth = key; appSheet = null; appStory = null;
+  const m = months.find(x => x.key === key);
+  try { items = (await api({ action: 'month', tab: m.tab, key })).items || []; } catch (e) { items = []; toast(TXT.load_err); }
+  items.forEach(c => { if (c.pick === undefined) c.pick = null; });
+  renderHomeCount(); if (current === 'validation') renderVal();
+}
+let lastMob = isMob(); window.addEventListener('resize', () => { const m = isMob(); if (m !== lastMob) { lastMob = m; if (current === 'validation') renderVal(); } });
+window.addEventListener('hashchange', route);
+// The dashboard page reports its height so the frame grows with it (one scroll for the whole page)
+window.addEventListener('message', e => { const f = $('#dashHost iframe'); if (f && e.source === f.contentWindow && e.data && e.data.pbvDashHeight) f.style.height = Math.max(400, +e.data.pbvDashHeight) + 'px'; });
+async function start() {
+  renderStatic(); route();
+  if (!CFG.calendar) return;
+  try {
+    months = (await api({ action: 'months' })).months || [];
+    const nowKey = curKey(), next = months.filter(m => m.key >= nowKey);
+    // The month being reviewed: the next one once the current one is mostly done, else the current one
+    const pick = (next[1] && new Date().getDate() >= 15 ? next[1] : next[0] || months[months.length - 1]);
+    if (pick) await loadMonth(pick.key);
+  } catch (e) { toast(TXT.load_err); }
+}
+start();
+}
+</script>
+</body>
+</html>

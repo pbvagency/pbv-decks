@@ -21,6 +21,16 @@ Commands
              Only the documents passed with --src are re-encrypted; the others keep
              their current encrypted file. The space page is rebuilt every time.
 
+             When the config has an "app" block, the space page is the client app instead of
+             the list: home, dashboard, content calendar to review and approve, documents.
+             One template for every client (tools/client-app/), fed live by the PBV Client
+             Spaces web app; pass the client's token with --token-file.
+             python3 tools/publish.py space tools/spaces/hotel-albatros.json \
+                 --password-file pw.txt --token-file token.txt
+
+  preview    Build the client app unencrypted with sample data, to look at it before publishing.
+             python3 tools/publish.py preview tools/spaces/hotel-albatros.json --data sample.json --out /tmp/space.html
+
   newpassword  Print a new random password (xxxx-xxxx-xxxx-xxxx). Never commit it.
 
 The config files in tools/ are outside the published folders, so they never go online.
@@ -260,6 +270,102 @@ __ITEMS__
 """
 
 
+PDF_VIEW = """<!DOCTYPE html>
+<html lang="__LANG__"><head><meta name="robots" content="noindex, nofollow, noarchive"><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>__TITLE__</title>
+<style>
+html,body{margin:0;height:100%;background:#F4F3F0;font-family:Inter,system-ui,-apple-system,sans-serif;color:#111}
+.bar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#fff;border-bottom:1px solid #E6E4DF;z-index:2}
+.bar b{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar a{font-size:14px;color:#111;text-decoration:none;border:1px solid #111;border-radius:999px;padding:7px 14px;white-space:nowrap}
+.bar a.back{border-color:transparent;padding-left:0}
+iframe{position:fixed;top:56px;left:0;width:100%;height:calc(100% - 56px);border:0;background:#F4F3F0}
+.mob{display:none;padding:96px 24px 24px;text-align:center}
+.mob a{display:inline-block;margin-top:18px;background:#111;color:#fff;border-radius:999px;padding:13px 22px;text-decoration:none;font-weight:600}
+@media (max-width:760px){iframe{display:none}.mob{display:block}.bar a.dl{display:none}}
+</style></head><body>
+<div class="bar"><a class="back" href="../#documents">&lsaquo; __BACK__</a><b>__TITLE__</b><a class="dl" id="dl" download="__FILE__">__DL__</a></div>
+<iframe id="pdf" title="__TITLE__"></iframe>
+<div class="mob"><div style="font-size:18px;font-weight:600">__TITLE__</div><a id="open" target="_blank" rel="noopener">__OPEN__</a></div>
+<script>
+{const b=atob("__PDF__"),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);
+const u=URL.createObjectURL(new Blob([a],{type:"application/pdf"}));
+document.getElementById("pdf").src=u;document.getElementById("dl").href=u;document.getElementById("open").href=u;}
+</script></body></html>"""
+
+
+def pdf_page(path, title, lang):
+    """A small page that shows a PDF (desktop) or opens it full screen (phone); encrypted like any document."""
+    data = open(path, "rb").read()
+    assert data[:5] == b"%PDF-", f"{path} is not a PDF"
+    mb = len(data) / 1e6
+    assert mb < 40, f"{path} is {mb:.0f} MB: export a lighter PDF (under 40 MB, ideally under 15)"
+    if mb > 15:
+        print(f"  note: {os.path.basename(path)} is {mb:.0f} MB, it will be slow to open on a phone")
+    fr = lang == "fr"
+    page = PDF_VIEW
+    for k, v in {"__LANG__": lang, "__TITLE__": H.escape(title), "__BACK__": "Retour" if fr else "Back",
+                 "__DL__": "Télécharger" if fr else "Download", "__OPEN__": "Ouvrir le PDF" if fr else "Open the PDF",
+                 "__FILE__": H.escape(os.path.basename(path))}.items():
+        page = page.replace(k, v)
+    return page.replace("__PDF__", base64.b64encode(data).decode())
+
+
+APP_DIR = os.path.join(TOOLS, "client-app")
+
+
+def data_uri(path):
+    import mimetypes
+    mt = mimetypes.guess_type(path)[0] or "application/octet-stream"
+    return f"data:{mt};base64," + base64.b64encode(open(path, "rb").read()).decode()
+
+
+def app_page(cfg, token, preview=None):
+    """The client app (tools/client-app/app.html) filled with one client's settings."""
+    app, space = cfg["app"], cfg["space"]
+    assets_dir = os.path.join(TOOLS, "spaces", "assets", space)
+    A = app.get("assets", {})
+    assets = {"logo": data_uri(os.path.join(assets_dir, A["logo"])),
+              "doors": [data_uri(os.path.join(assets_dir, x)) for x in A.get("doors", [])]}
+    docs = [{"title": H.unescape(d["title"]), "meta": H.unescape(d.get("meta", "")), "url": d["slug"] + "/", "kind": d.get("kind", "DOC")}
+            for d in cfg.get("documents", []) if d["slug"] != app.get("dashboard")]
+    docs += app.get("links", [])
+    conf = {
+        "client_id": app.get("client_id", space), "endpoint": app.get("endpoint", ""), "token": token or "",
+        "lang": cfg.get("lang", "en"), "name": app["name"], "short": app.get("short", app["name"]),
+        "hello": app.get("hello", app["name"]), "cobrand": app.get("cobrand", f'{app["name"]} \u00d7 PBV Agency'),
+        "handle": app.get("handle", ""), "bio": app.get("bio", ""), "site": app.get("site", ""),
+        "highlights": app.get("highlights", []), "platforms": app.get("platforms", ["ig", "fb"]),
+        "reviewers": app.get("reviewers", []), "dashboard": (app["dashboard"] + "/") if app.get("dashboard") else "",
+        "documents_intro": app.get("documents_intro", ""), "docs": docs, "assets": assets, "session_key": "pbv_" + space,
+    }
+    # The calendar needs the PBV Client Spaces web app. Without an endpoint the space opens with
+    # the dashboard and the documents only, and the calendar is added later by setting app.endpoint.
+    conf["calendar"] = bool(preview) or bool(conf["endpoint"])
+    if not preview and conf["endpoint"]:
+        assert conf["endpoint"].startswith("https://script.google.com/"), "app.endpoint: the PBV Client Spaces web app URL"
+        assert len(conf["token"]) >= 24, "--token-file: the client's token (as in the CLIENTS property of the web app)"
+    if not conf["calendar"]:
+        conf["token"] = ""
+    colors = "".join(f"--{k}:{v};" for k, v in app.get("colors", {}).items() if re.fullmatch(r"[a-z0-9-]+", k) and re.fullmatch(r"#[0-9A-Fa-f]{3,8}", v))
+    page = open(os.path.join(APP_DIR, "app.html"), encoding="utf-8").read()
+    js = lambda o: json.dumps(o, ensure_ascii=False).replace("</", "<\\/")
+    for k, v in {"__CSS__": open(os.path.join(APP_DIR, "app.css"), encoding="utf-8").read(), "__COLORS__": colors,
+                 "__PBVLOGO__": open(os.path.join(APP_DIR, "pbv-logo.svg"), encoding="utf-8").read(),
+                 "__LANG__": conf["lang"], "__TITLE__": H.escape(f'{app["name"]} | PBV Agency')}.items():
+        page = page.replace(k, v)
+    page = page.replace("__CONFIG__", js(conf)).replace("__PREVIEW__", js(preview) if preview else "null")
+    check_deck(page, space)
+    return page
+
+
+def cmd_preview(a):
+    cfg = json.load(open(a.config))
+    page = app_page(cfg, "", json.load(open(a.data)))
+    open(a.out, "w").write(page)
+    print("wrote", a.out, f"{len(page)//1024} KB (unencrypted: never publish this file)")
+
+
 def cmd_space(a):
     cfg = json.load(open(a.config))
     pw = read_pw(a.password_file)
@@ -282,13 +388,21 @@ def cmd_space(a):
     for doc in docs:
         out = os.path.join(base, doc["slug"], "index.html")
         if doc["slug"] in srcs:
-            text = open(srcs[doc["slug"]], encoding="utf-8").read()
+            src = srcs[doc["slug"]]
+            text = pdf_page(src, H.unescape(doc["title"]), lang) if src.lower().endswith(".pdf") else open(src, encoding="utf-8").read()
             check_deck(text, doc["slug"])
             page = gate(encrypt(text, pw), f'{cfg["client"]} | {doc["title"]} | PBV Agency', f'{cfg["client"]} x PBV Agency',
                         doc["gate_h1"], T["DOC_INTRO"], doc.get("button", T["OPEN_DOC"]), key, lang)
             write(out, page)
         else:
             assert os.path.exists(out), f"{doc['slug']}: no encrypted copy yet, pass --src {doc['slug']}=FILE"
+    if cfg.get("app"):
+        page = app_page(cfg, read_pw(a.token_file) if a.token_file else "")
+        write(os.path.join(base, "index.html"),
+              gate(encrypt(page, pw), f'{cfg["client"]} | PBV Agency', f'{cfg["client"]} x PBV Agency', "Votre <em>espace</em>" if lang == "fr" else "Your <em>space</em>",
+                   T["SPACE_INTRO"], T["OPEN"], key, lang))
+        print(f"\nLink: https://clients.pbvagency.com/{space}/")
+        return
     items = []
     for i, doc in enumerate(docs):
         new = f'<span class="new">{T["NEW"]}</span>' if i == 0 and len(docs) > 1 else ""
@@ -328,7 +442,10 @@ def cmd_proposal(a):
 p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
 sub = p.add_subparsers(dest="cmd", required=True)
 s = sub.add_parser("space"); s.add_argument("config"); s.add_argument("--password-file", required=True); s.add_argument("--src", action="append")
+s.add_argument("--token-file", help="client app only: the client's token for the PBV Client Spaces web app")
 s.set_defaults(f=cmd_space)
+s = sub.add_parser("preview"); s.add_argument("config"); s.add_argument("--data", required=True); s.add_argument("--out", required=True)
+s.set_defaults(f=cmd_preview)
 s = sub.add_parser("proposal"); s.add_argument("src"); s.add_argument("slug"); s.add_argument("--client", required=True)
 s.add_argument("--contact"); s.add_argument("--password-file", required=True)
 s.add_argument("--eyebrow", default="Private proposal"); s.add_argument("--button", default="Open the proposal")

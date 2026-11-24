@@ -1,0 +1,72 @@
+{
+  "client": "Boutique Hotel Albatros",
+  "space": "hotel-albatros",
+  "lang": "en",
+  "intro": "Your posts to review, your monthly results and your documents, in one place.",
+  "documents": [
+    {
+      "slug": "dashboard",
+      "title": "Social media dashboard",
+      "gate_h1": "Social media <em>dashboard</em>",
+      "meta": "October 2026 &middot; updated at the start of every month"
+    }
+  ],
+  "app": {
+    "endpoint": "",
+    "name": "Boutique Hotel Albatros",
+    "short": "Albatros",
+    "hello": "Juliette",
+    "cobrand": "Boutique Hotel Albatros × PBV Agency",
+    "handle": "hotelalbatroszermatt",
+    "bio": "Family boutique hotel in Zermatt, hosted by Juliette and Raphael.\nAlpine rooms, Matterhorn views and a spa.\nBook direct for the best rates ⤵️",
+    "site": "tinyurl.com/BoutiqueHotelAlbatros",
+    "highlights": [
+      "The rooms",
+      "Breakfast",
+      "The spa",
+      "The honesty bar",
+      "Zermatt in winter",
+      "The hosts",
+      "Practical info",
+      "Book direct"
+    ],
+    "platforms": [
+      "ig",
+      "fb"
+    ],
+    "reviewers": [
+      "Juliette"
+    ],
+    "dashboard": "dashboard",
+    "colors": {
+      "o1": "#A88460",
+      "o2": "#D7DCE4",
+      "o3": "#2A3648",
+      "navy": "#2A3648",
+      "sand": "#A88460"
+    },
+    "assets": {
+      "logo": "logo.png",
+      "doors": [
+        "door-dashboard.jpg",
+        "door-calendar.jpg",
+        "door-documents.jpg"
+      ]
+    },
+    "documents_intro": "The monthly dashboard and the strategy. The season review arrives after the winter season.",
+    "links": [
+      {
+        "title": "Strategy 2026",
+        "meta": "The year-one social media strategy for the Albatros, September 2026",
+        "url": "",
+        "kind": "PDF"
+      },
+      {
+        "title": "Season review",
+        "meta": "What the winter season brought, and the plan for summer",
+        "url": "",
+        "kind": "PDF"
+      }
+    ]
+  }
+}
