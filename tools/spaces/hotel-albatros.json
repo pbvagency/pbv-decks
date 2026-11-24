@@ -9,6 +9,13 @@
       "title": "Social media dashboard",
       "gate_h1": "Social media <em>dashboard</em>",
       "meta": "October 2026 &middot; updated at the start of every month"
+    },
+    {
+      "slug": "strategy",
+      "title": "Strategy 2026",
+      "gate_h1": "Strategy <em>2026</em>",
+      "meta": "The year-one social media strategy for the Albatros, September 2026",
+      "kind": "PDF"
     }
   ],
   "app": {
@@ -55,12 +62,6 @@
     },
     "documents_intro": "The monthly dashboard and the strategy. The season review arrives after the winter season.",
     "links": [
-      {
-        "title": "Strategy 2026",
-        "meta": "The year-one social media strategy for the Albatros, September 2026",
-        "url": "",
-        "kind": "PDF"
-      },
       {
         "title": "Season review",
         "meta": "What the winter season brought, and the plan for summer",
