@@ -8,10 +8,8 @@
 <title>__TITLE__</title>
 <script async src="https://www.googletagmanager.com/gtag/js?id=G-GV6E47H073"></script>
 <script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments);}gtag('js',new Date());gtag('config','G-GV6E47H073');</script>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
+__FONTS__
 __CSS__
 :root{__COLORS__}
 </style>
@@ -120,7 +118,7 @@ const TXT = {
    phone_cap:'Sur téléphone',phone_h:'L’app de validation',phone_p:'Depuis un téléphone, le calendrier devient une app qui montre les contenus comme ils apparaîtront. On choisit la copie, puis on valide ou on demande une modification directement sur chaque contenu.',
    contents:'Contenus',to_val:'à valider',all_done:'Tout est validé',planned:'Prévu',posts:'publications',stories:'stories',
    t_ok:'Contenu validé',t_sent:'Demande envoyée à PBV Agency',t_prev:'Aperçu: rien n’est enregistré.',t_moved:'Ce contenu vient d’être modifié. Rechargez la page.',t_err:'Cela n’a pas fonctionné. Vérifiez la connexion et réessayez.',
-   loading:'Chargement du calendrier...',load_err:'Le calendrier ne s’est pas chargé. Rechargez la page dans un instant.',play:'Lire la vidéo',see_live:'Voir sur Instagram',vis_soon:'Visuel à venir',back:'Retour',details:'Détails',see_val:'Voir et valider'},
+   loading:'Chargement du calendrier...',load_err:'Le calendrier ne s’est pas chargé. Rechargez la page dans un instant.',play:'Lire la vidéo',none_yet:'Rien à valider pour le moment',see_live:'Voir sur Instagram',vis_soon:'Visuel à venir',back:'Retour',details:'Détails',see_val:'Voir et valider'},
  en:{nav_home:'Home',nav_dash:'Dashboard',nav_cal:'Calendar',nav_docs:'Documents',logout:'Log out',hello:'Hello',preview:'Preview',
    preview_note:'Preview with the real posts from the calendar. Your choices stay in this preview.',
    dash_title:'Your results',docs_title:'Reports and documents',door_dash:'Your results',door_cal:'Posts to review',door_docs:'Reports and documents',
@@ -138,7 +136,7 @@ const TXT = {
    phone_cap:'On your phone',phone_h:'The review app',phone_p:'On a phone, the calendar becomes an app that shows each post the way it will appear. Choose the caption, then approve or ask for a change, right on the post.',
    contents:'Posts',to_val:'to review',all_done:'All approved',planned:'Planned',posts:'posts',stories:'stories',
    t_ok:'Approved, thank you',t_sent:'Sent to PBV Agency',t_prev:'Preview: nothing is saved.',t_moved:'This post was just updated. Reload the page.',t_err:'That did not go through. Check your connection and try again.',
-   loading:'Loading the calendar...',load_err:'The calendar did not load. Reload the page in a moment.',play:'Play the video',see_live:'See it on Instagram',vis_soon:'Visual coming',back:'Back',details:'Details',see_val:'Review'}
+   loading:'Loading the calendar...',load_err:'The calendar did not load. Reload the page in a moment.',play:'Play the video',none_yet:'Nothing to review yet',see_live:'See it on Instagram',vis_soon:'Visual coming',back:'Back',details:'Details',see_val:'Review'}
 }[LANG];
 const MOIS = LANG === 'fr' ? ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'] : ['January','February','March','April','May','June','July','August','September','October','November','December'];
 const DOW = LANG === 'fr' ? ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'] : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
@@ -326,7 +324,7 @@ function renderApp(host) {
   const n = items.filter(c => c.st === 'review').length, m = months.find(x => x.key === valMonth);
   const keep = host.querySelector('.ma-body')?.scrollTop || 0, sameTab = host.dataset.tab === appTab; host.dataset.tab = appTab;
   host.innerHTML = `<div class="mapp">
-    <div class="ma-top"><b>${TXT.contents} · ${esc(m ? m.label : '')}</b><span class="ma-cnt ${n ? '' : 'done'}">${n ? n + ' ' + TXT.to_val : TXT.all_done}</span></div>
+    <div class="ma-top"><b>${TXT.contents} · ${esc(m ? m.label : '')}</b><span class="ma-cnt ${n ? '' : 'done'}">${n ? n + ' ' + TXT.to_val : items.some(c => c.st === 'ok') ? TXT.all_done : TXT.none_yet}</span></div>
     ${isMob() && months.length > 1 ? `<div style="padding:8px 12px;border-bottom:1px solid #eee"><select id="mobMonth" class="who-sel" style="width:100%">${months.slice().reverse().map(x => `<option value="${x.key}" ${x.key === valMonth ? 'selected' : ''}>${esc(x.label)}</option>`).join('')}</select></div>` : ''}
     <div class="ma-body">${appTab === 'ig' ? appIG() : appTab === 'st' ? appStories() : appSocial(appTab)}</div>
     <nav class="ma-nav">${tabs.map(([k, l]) => `<button data-tab="${k}" class="${appTab === k ? 'on' : ''}"><span class="ico">${ICON[k]}${nb(k) ? `<span class="nb">${nb(k)}</span>` : ''}</span>${l}</button>`).join('')}</nav>

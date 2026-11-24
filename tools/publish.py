@@ -202,8 +202,15 @@ def localize(template, lang):
     return template
 
 
-def gate(payload, title, eyebrow, h1, intro, button, key, lang="en"):
+def gate(payload, title, eyebrow, h1, intro, button, key, lang="en", fonts=False):
     out = localize(GATE, lang)
+    if fonts:   # client app spaces: the password page in the PBV fonts too
+        css = open(os.path.join(TOOLS, "client-app", "pbv-fonts.css"), encoding="utf-8").read()
+        css += "body{font-family:'Inter',-apple-system,sans-serif}h1,.t{font-family:'DM Serif Display',Georgia,serif}.logo{height:26px!important;width:auto!important;max-width:160px;margin:0 0 22px 0!important}"
+        out = out.replace("</style>", css + "\n</style>", 1)
+        # and Pauline's colour logo, as in the app footer
+        out = out.replace("__LOGO__", "data:image/svg+xml;base64," + base64.b64encode(
+            open(os.path.join(TOOLS, "client-app", "pbv-logo.svg"), "rb").read()).decode(), 1)
     for k, v in {"__TITLE__": H.escape(title), "__FAV__": FAV, "__LOGO__": LOGO, "__EYEBROW__": eyebrow,
                  "__H1__": h1, "__INTRO__": intro, "__BUTTON__": button, "__KEY__": key}.items():
         out = out.replace(k, v)
@@ -274,6 +281,7 @@ PDF_VIEW = """<!DOCTYPE html>
 <html lang="__LANG__"><head><meta name="robots" content="noindex, nofollow, noarchive"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1"><title>__TITLE__</title>
 <style>
+__FONTS__
 html,body{margin:0;height:100%;background:#F4F3F0;font-family:Inter,system-ui,-apple-system,sans-serif;color:#111}
 .bar{position:fixed;top:0;left:0;right:0;height:56px;display:flex;align-items:center;gap:12px;padding:0 16px;background:#fff;border-bottom:1px solid #E6E4DF;z-index:2}
 .bar b{flex:1;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -304,7 +312,8 @@ def pdf_page(path, title, lang):
         print(f"  note: {os.path.basename(path)} is {mb:.0f} MB, it will be slow to open on a phone")
     fr = lang == "fr"
     page = PDF_VIEW
-    for k, v in {"__LANG__": lang, "__TITLE__": H.escape(title), "__BACK__": "Retour" if fr else "Back",
+    for k, v in {"__FONTS__": open(os.path.join(TOOLS, "client-app", "pbv-fonts.css"), encoding="utf-8").read(),
+                 "__LANG__": lang, "__TITLE__": H.escape(title), "__BACK__": "Retour" if fr else "Back",
                  "__DL__": "Télécharger" if fr else "Download", "__OPEN__": "Ouvrir le PDF" if fr else "Open the PDF",
                  "__FILE__": H.escape(os.path.basename(path))}.items():
         page = page.replace(k, v)
@@ -350,7 +359,8 @@ def app_page(cfg, token, preview=None):
     colors = "".join(f"--{k}:{v};" for k, v in app.get("colors", {}).items() if re.fullmatch(r"[a-z0-9-]+", k) and re.fullmatch(r"#[0-9A-Fa-f]{3,8}", v))
     page = open(os.path.join(APP_DIR, "app.html"), encoding="utf-8").read()
     js = lambda o: json.dumps(o, ensure_ascii=False).replace("</", "<\\/")
-    for k, v in {"__CSS__": open(os.path.join(APP_DIR, "app.css"), encoding="utf-8").read(), "__COLORS__": colors,
+    for k, v in {"__FONTS__": open(os.path.join(APP_DIR, "pbv-fonts.css"), encoding="utf-8").read(),
+                 "__CSS__": open(os.path.join(APP_DIR, "app.css"), encoding="utf-8").read(), "__COLORS__": colors,
                  "__PBVLOGO__": open(os.path.join(APP_DIR, "pbv-logo.svg"), encoding="utf-8").read(),
                  "__LANG__": conf["lang"], "__TITLE__": H.escape(f'{app["name"]} | PBV Agency')}.items():
         page = page.replace(k, v)
@@ -392,7 +402,7 @@ def cmd_space(a):
             text = pdf_page(src, H.unescape(doc["title"]), lang) if src.lower().endswith(".pdf") else open(src, encoding="utf-8").read()
             check_deck(text, doc["slug"])
             page = gate(encrypt(text, pw), f'{cfg["client"]} | {doc["title"]} | PBV Agency', f'{cfg["client"]} x PBV Agency',
-                        doc["gate_h1"], T["DOC_INTRO"], doc.get("button", T["OPEN_DOC"]), key, lang)
+                        doc["gate_h1"], T["DOC_INTRO"], doc.get("button", T["OPEN_DOC"]), key, lang, fonts=bool(cfg.get("app")))
             write(out, page)
         else:
             assert os.path.exists(out), f"{doc['slug']}: no encrypted copy yet, pass --src {doc['slug']}=FILE"
@@ -400,7 +410,7 @@ def cmd_space(a):
         page = app_page(cfg, read_pw(a.token_file) if a.token_file else "")
         write(os.path.join(base, "index.html"),
               gate(encrypt(page, pw), f'{cfg["client"]} | PBV Agency', f'{cfg["client"]} x PBV Agency', "Votre <em>espace</em>" if lang == "fr" else "Your <em>space</em>",
-                   T["SPACE_INTRO"], T["OPEN"], key, lang))
+                   T["SPACE_INTRO"], T["OPEN"], key, lang, fonts=True))
         print(f"\nLink: https://clients.pbvagency.com/{space}/")
         return
     items = []
